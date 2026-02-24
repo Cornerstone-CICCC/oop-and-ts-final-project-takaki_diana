@@ -1,0 +1,55 @@
+---
+import "../styles/style.css";
+---
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Final Project-Kanban Board</title>
+</head>
+
+<body>
+<header class="topbar" >
+    <div class="brand">Kanban</div>
+
+
+       <div class="search-wrap">
+    <input id ="searchInput" class="search" placeholder="Search task (e.g., CSS)"/>
+      <div id ="searchResults" class="search-results hidden"></div>
+  </div>
+
+
+<button id="addTaskBtn" class="primary">+ Add Task</button>
+</header>
+<main class="board">
+  <section class="col" data-status="todo">
+    <div class="col-head">
+      <h2>To do</h2>
+      <button class="icon-btn" data-add="todo">+</button>
+    </div>
+    <div class="col-body" id="col-todo"></div>
+  </section>
+
+  <section class="col" data-status="inprogress">
+    <div class="col-head">
+      <h2>In Progress</h2>
+      <button class="icon-btn" data-add="inprogress">+</button>
+    </div>
+    <div class="col-body" id="col-inprogress"></div>
+  </section>
+
+  <section class="col" data-status="done">
+    <div class="col-head">
+      <h2>Done</h2>
+      <button class="icon-btn" data-add="done">+</button>
+    </div>
+    <div class="col-body" id="col-done"></div>
+  </section>
+</main>
+<div id="modalBackdrop" class="backdrop hidden">
+  <div id="modal" class="modal"></div>
+</div>
+
+</body>
+</html>
+<script type="module" src="/src/scripts/app.ts"></script>
