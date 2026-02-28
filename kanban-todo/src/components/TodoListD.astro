@@ -1,0 +1,292 @@
+<section class="kanban-section">
+  <div class="kanban-toolbar">
+    <button class="add-column-btn" id="add-column-btn" type="button">
+      Add New Column
+      <i class="fa-solid fa-circle-plus"></i>
+    </button>
+  </div>
+
+  <div class="kanban-wrapper" id="kanban-wrapper"></div>
+</section>
+
+<style is:global>
+  * {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+  }
+
+  .kanban-section {
+    background-color: white;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .kanban-toolbar button {
+    font-size: large;
+  }
+
+  .kanban-toolbar i {
+    font-size: 25px;
+  }
+
+  .kanban-wrapper {
+    width: 100%;
+    min-height: 100vh;
+    padding: 1.5rem;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1.5rem;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 1rem;
+    scrollbar-width: none;
+  }
+
+  .kanban-wrapper::-webkit-scrollbar {
+    display: none;
+  }
+
+  .add-column-btn {
+    background: none;
+    border: none;
+    color: black;
+    transition: background 0.5s ease-in-out;
+  }
+
+  .add-column-btn:hover {
+    color: rgb(201, 201, 201);
+  }
+
+  .kanban-column {
+    background-color: #eef2f5;
+    border-radius: 12px;
+    padding: 1rem;
+    min-width: 320px;
+    max-width: 320px;
+    flex-shrink: 0;
+    min-height: 200px;
+    color: white;
+    box-shadow: 0 4px 6px rgb(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .column-header h3 {
+    font-weight: 700;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+    color: black;
+  }
+
+  .column-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .column-actions button {
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    outline: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .column-actions button:hover {
+    background: none;
+  }
+
+  .column-actions button i {
+    background: transparent;
+    display: block;
+    line-height: 1;
+  }
+
+  .column-body {
+    background-color: #eef2f5;
+    border-radius: 10px;
+    min-height: 80vh;
+    padding: 0.75rem;
+  }
+
+  @media (max-width: 900px) {
+    .kanban-wrapper {
+      flex-direction: column;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .kanban-column {
+      width: 100%;
+      min-width: 100%;
+      max-width: 100%;
+      flex-shrink: 1;
+    }
+  }
+</style>
+
+<script>
+  interface TodoColumn {
+    id: string;
+    title: string;
+  }
+
+  class KanbanBoard {
+    private columns: TodoColumn[] = [];
+    private wrapperElement!: HTMLElement;
+    private readonly storageKey = "kanban-columns";
+
+    constructor(wrapperId: string) {
+      const wrapper = document.getElementById(wrapperId);
+
+      if (!(wrapper instanceof HTMLElement)) {
+        console.error(`Wrapper with id "${wrapperId}" not found.`);
+        return;
+      }
+
+      this.wrapperElement = wrapper;
+      this.columns = this.loadColumns();
+      this.renderColumns();
+      this.bindEvents();
+    }
+
+    private getDefaultColumns(): TodoColumn[] {
+      return [
+        { id: "todo", title: "To Do" },
+        { id: "inprogress", title: "In Progress" },
+        { id: "done", title: "Done" },
+      ];
+    }
+
+    private loadColumns(): TodoColumn[] {
+      const saved = localStorage.getItem(this.storageKey);
+      if (!saved) return this.getDefaultColumns();
+
+      try {
+        const parsed = JSON.parse(saved) as TodoColumn[];
+        return Array.isArray(parsed) && parsed.length > 0
+          ? parsed
+          : this.getDefaultColumns();
+      } catch (error) {
+        return this.getDefaultColumns();
+      }
+    }
+
+    private saveColumns(): void {
+      localStorage.setItem(this.storageKey, JSON.stringify(this.columns));
+    }
+
+    addColumns(title: string): void {
+      const cleanTitle = title.trim();
+      if (!cleanTitle) return;
+
+      const newColumn: TodoColumn = {
+        id: crypto.randomUUID(),
+        title: cleanTitle,
+      };
+      this.columns.push(newColumn);
+      this.saveColumns();
+      this.renderColumns();
+    }
+
+    private deleteColumns(columnId: string): void {
+      if (["todo", "inprogress", "done"].includes(columnId)) return;
+
+      this.columns = this.columns.filter((col) => col.id !== columnId);
+      this.saveColumns();
+      this.renderColumns();
+    }
+
+    private editColumnTitle(columnId: string): void {
+      const column = this.columns.find((col) => col.id === columnId);
+      if (!column) return;
+
+      const newTitle = prompt("Edit column name:", column.title);
+      if (newTitle === null) return;
+
+      const cleanTitle = newTitle.trim();
+      if (!cleanTitle) return;
+
+      column.title = cleanTitle;
+      this.saveColumns();
+      this.renderColumns();
+    }
+
+    private bindEvents(): void {
+      const addBtn = document.getElementById("add-column-btn");
+      if (!addBtn) return;
+
+      addBtn.onclick = null;
+      addBtn.addEventListener("click", () => {
+        const title = prompt("New column name:");
+        if (title) {
+          this.addColumns(title);
+        }
+      });
+    }
+
+    private renderColumns(): void {
+      this.wrapperElement.innerHTML = "";
+
+      this.columns.forEach((column) => {
+        const columnElement = document.createElement("div");
+        columnElement.className = "kanban-column";
+        columnElement.dataset.columnId = column.id;
+
+        columnElement.innerHTML = `
+            <div class="column-header">
+                <h3>${column.title}</h3>
+
+                <div class="column-actions">
+                    <button type="button" class="edit-column-btn"><i class="fa-regular fa-pen-to-square"></i></button>
+                    <button type="button" class="delete-column-btn"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+
+            <div class="column-body" id="body-${column.id}"></div>
+            `;
+        const editBtn = columnElement.querySelector(
+          ".edit-column-btn",
+        ) as HTMLButtonElement;
+        const deleteBtn = columnElement.querySelector(
+          ".delete-column-btn",
+        ) as HTMLButtonElement;
+
+        editBtn?.addEventListener("click", () =>
+          this.editColumnTitle(column.id),
+        );
+
+        deleteBtn?.addEventListener("click", () => {
+          if (confirm(`Delete "${column.title} column?"`)) {
+            this.deleteColumns(column.id);
+          }
+        });
+        this.wrapperElement.appendChild(columnElement);
+      });
+    }
+  }
+
+  const initKanban = () => {
+    new KanbanBoard("kanban-wrapper");
+  };
+
+  document.addEventListener("DOMContentLoaded", initKanban);
+</script>
