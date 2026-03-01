@@ -3,20 +3,20 @@ import type { Task } from "../types/task";
 export const seedTasks: Task[] = [
   {
     id: "task1",
-    title: "Setup Astro project",
-    description: "Create base Kanban UI structure",
+    title: "Example Task 1",
+    description: "Complete Task1",
     status: "todo",
   },
   {
     id: "task2",
-    title: "Build TaskCard component",
-    description: "Render title and description",
+    title: "Example Task 2",
+    description: "Complete Task 2",
     status: "in-progress",
   },
   {
     id: "task3",
-    title: "Fix TaskList typings",
-    description: "Add proper Task typing and delete guard",
+    title: "Example Task 3",
+    description: "Complete Task 3",
     status: "done",
   },
 ];
