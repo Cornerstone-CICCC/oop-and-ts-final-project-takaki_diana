@@ -1,0 +1,64 @@
+<header class="header">
+  <div class="left">
+    <h1>CICCC Board</h1>
+    <input type="search" placeholder="Search" />
+  </div>
+
+  <div class="right">
+    <span class="material-symbols-outlined">notifications</span>
+    <span class="material-symbols-outlined">help</span>
+    <span class="material-symbols-outlined">account_circle</span>
+  </div>
+</header>
+
+<style>
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.5rem 2rem;
+  background: #f8fafc;
+  gap: 1rem;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 480px;
+  width: 100%;
+}
+
+.left h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.left input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.material-symbols-outlined {
+  font-size: 24px;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .header {
+    flex-direction: column;
+  }
+
+  .right {
+    justify-content: flex-end;
+  }
+}
+</style>
