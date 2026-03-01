@@ -1,0 +1,64 @@
+---
+// This is the component for each column
+import TaskCard from "./TaskCard.astro";
+import TaskModal from "./TaskModal.astro";
+import { type Task } from "../types/task";
+
+const { title, columnId, tasks } = Astro.props;
+
+// const addBtn = document.getElementById("addBtn");
+// addBtn?.addEventListener("click", () => {
+//   // show modal where user can add task
+//   const taskModal = document.getElementById("taskModal");
+//   taskModal!.style.display = "block";
+// });
+---
+
+<div class="kanbanColumn" id={columnId}>
+  <h2 class="title">{title}</h2>
+  <div class="task-list" id={`${columnId}-list`}>
+    {
+      tasks ? (
+        tasks.map((t: Task) => <TaskCard todoItem={t} />)
+      ) : (
+        <p>No items to show</p>
+      )
+    }
+  </div>
+</div>
+
+<!-- ========= Styling ========= -->
+<style>
+  .kanbanColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+    border: 1px solid rgb(161, 161, 161);
+    border-radius: 10px;
+    background-color: #171b27;
+    padding: 0.75rem;
+  }
+
+  .title {
+    display: inline;
+    border-bottom: 2px solid red;
+  }
+
+  .task-list {
+    width: 100%;
+    flex: 1;
+    min-height: 200px;
+    margin: 0;
+  }
+  .task-list.is-over {
+    outline: 2px dashed currentColor;
+    outline-offset: 6px;
+  }
+  .todoItem[draggable="true"] {
+    cursor: grab;
+  }
+  .todoItem:active {
+    cursor: grabbing;
+  }
+</style>
