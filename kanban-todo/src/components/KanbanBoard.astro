@@ -22,18 +22,14 @@ console.log(doneTask);
     <button id="add-task-btn">Add Task</button>
   </div>
   <div class="column-wrapper">
-    <KanbanColumn title="todo" columnId="column-todo" tasks={todoTask} />
-    <KanbanColumn
-      title="In-progress"
-      columnId="column-in-progress"
-      tasks={inProgress}
-    />
-    <KanbanColumn title="Done" columnId="column-done" tasks={doneTask} />
+    <KanbanColumn title="To Do" columnId="column-todo" />
+    <KanbanColumn title="In Progress" columnId="column-in-progress" />
+    <KanbanColumn title="Done" columnId="column-done" />
   </div>
   <TaskModal id="taskModal" />
 </section>
 
-<style>
+<style is:global>
   :root {
     /* ===== Surfaces ===== */
     --bg-app: #10121c; /* deepest background */

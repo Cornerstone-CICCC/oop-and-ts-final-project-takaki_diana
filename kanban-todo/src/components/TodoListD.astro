@@ -4,18 +4,16 @@
       Add New Column
       <i class="fa-solid fa-circle-plus"></i>
     </button>
+    <button class="add-column-btn" id="add-column-btn" type="button">
+      Add New Task
+      <i class="fa-solid fa-circle-plus"></i>
+    </button>
   </div>
 
-  <div class="kanban-wrapper" id="kanban-wrapper"></div>
+  <div class="board-root" id="board-root"></div>
 </section>
 
 <style is:global>
-  * {
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
-  }
-
   .kanban-section {
     background-color: white;
     max-width: 1600px;
@@ -24,15 +22,24 @@
     border-radius: 12px;
   }
 
+  .kanban-toolbar {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
   .kanban-toolbar button {
     font-size: large;
+    cursor: pointer;
   }
 
   .kanban-toolbar i {
-    font-size: 25px;
+    font-size: 20px;
+    margin-left: 0.25rem;
   }
 
-  .kanban-wrapper {
+  .board-root {
     width: 100%;
     min-height: 100vh;
     padding: 1.5rem;
@@ -47,17 +54,19 @@
     scrollbar-width: none;
   }
 
-  .kanban-wrapper::-webkit-scrollbar {
+  .board-root::-webkit-scrollbar {
     display: none;
   }
 
+  .add-task-btn,
   .add-column-btn {
     background: none;
     border: none;
     color: black;
-    transition: background 0.5s ease-in-out;
+    transition: color 0.3s ease-in-out;
   }
 
+  .add-task-btn:hover,
   .add-column-btn:hover {
     color: rgb(201, 201, 201);
   }
@@ -110,10 +119,6 @@
     justify-content: center;
   }
 
-  .column-actions button:hover {
-    background: none;
-  }
-
   .column-actions button i {
     background: transparent;
     display: block;
@@ -128,7 +133,7 @@
   }
 
   @media (max-width: 900px) {
-    .kanban-wrapper {
+    .board-root {
       flex-direction: column;
       overflow-x: hidden;
       overflow-y: auto;
@@ -143,150 +148,204 @@
   }
 </style>
 
-<script>
-  interface TodoColumn {
-    id: string;
-    title: string;
-  }
+<!-- <script>
+  // export interface Task {
+  //   id: string;
+  //   title: string;
+  //   description: string;
+  //   status: string;
+  // }
 
-  class KanbanBoard {
-    private columns: TodoColumn[] = [];
-    private wrapperElement!: HTMLElement;
-    private readonly storageKey = "kanban-columns";
+  // interface TodoColumn {
+  //   id: string;
+  //   title: string;
+  // }
 
-    constructor(wrapperId: string) {
-      const wrapper = document.getElementById(wrapperId);
+  // class KanbanBoard {
+  //   private columns: TodoColumn[] = [];
+  //   private wrapperElement!: HTMLElement;
+  //   private readonly storageKey = "kanban-columns";
+  //   private taskList: TaskList;
 
-      if (!(wrapper instanceof HTMLElement)) {
-        console.error(`Wrapper with id "${wrapperId}" not found.`);
-        return;
-      }
+  //   constructor(wrapperId: string, taskList: TaskList) {
+  //     this.taskList = taskList;
+  //     const wrapper = document.getElementById(wrapperId);
 
-      this.wrapperElement = wrapper;
-      this.columns = this.loadColumns();
-      this.renderColumns();
-      this.bindEvents();
-    }
+  //     if (!(wrapper instanceof HTMLElement)) {
+  //       console.error(`Wrapper with id "${wrapperId}" not found.`);
+  //       return;
+  //     }
 
-    private getDefaultColumns(): TodoColumn[] {
-      return [
-        { id: "todo", title: "To Do" },
-        { id: "inprogress", title: "In Progress" },
-        { id: "done", title: "Done" },
-      ];
-    }
+  //     this.wrapperElement = wrapper;
+  //     this.columns = this.loadColumns();
+  //     this.renderColumns();
+  //     this.bindEvents();
+  //   }
 
-    private loadColumns(): TodoColumn[] {
-      const saved = localStorage.getItem(this.storageKey);
-      if (!saved) return this.getDefaultColumns();
+  //   private getDefaultColumns(): TodoColumn[] {
+  //     return [
+  //       { id: "todo", title: "To Do" },
+  //       { id: "inprogress", title: "In Progress" },
+  //       { id: "done", title: "Done" },
+  //     ];
+  //   }
 
-      try {
-        const parsed = JSON.parse(saved) as TodoColumn[];
-        return Array.isArray(parsed) && parsed.length > 0
-          ? parsed
-          : this.getDefaultColumns();
-      } catch (error) {
-        return this.getDefaultColumns();
-      }
-    }
+  //   private loadColumns(): TodoColumn[] {
+  //     const saved = localStorage.getItem(this.storageKey);
+  //     if (!saved) return this.getDefaultColumns();
 
-    private saveColumns(): void {
-      localStorage.setItem(this.storageKey, JSON.stringify(this.columns));
-    }
+  //     try {
+  //       const parsed = JSON.parse(saved) as TodoColumn[];
+  //       return Array.isArray(parsed) && parsed.length > 0
+  //         ? parsed
+  //         : this.getDefaultColumns();
+  //     } catch (error) {
+  //       return this.getDefaultColumns();
+  //     }
+  //   }
 
-    addColumns(title: string): void {
-      const cleanTitle = title.trim();
-      if (!cleanTitle) return;
+  //   private saveColumns(): void {
+  //     localStorage.setItem(this.storageKey, JSON.stringify(this.columns));
+  //   }
 
-      const newColumn: TodoColumn = {
-        id: crypto.randomUUID(),
-        title: cleanTitle,
-      };
-      this.columns.push(newColumn);
-      this.saveColumns();
-      this.renderColumns();
-    }
+  //   addColumns(title: string): void {
+  //     const cleanTitle = title.trim();
+  //     if (!cleanTitle) return;
 
-    private deleteColumns(columnId: string): void {
-      if (["todo", "inprogress", "done"].includes(columnId)) return;
+  //     const newColumn: TodoColumn = {
+  //       id: crypto.randomUUID(),
+  //       title: cleanTitle,
+  //     };
+  //     this.columns.push(newColumn);
+  //     this.saveColumns();
+  //     this.renderColumns();
+  //   }
 
-      this.columns = this.columns.filter((col) => col.id !== columnId);
-      this.saveColumns();
-      this.renderColumns();
-    }
+  //   private deleteColumns(columnId: string): void {
+  //     if (["todo", "inprogress", "done"].includes(columnId)) return;
 
-    private editColumnTitle(columnId: string): void {
-      const column = this.columns.find((col) => col.id === columnId);
-      if (!column) return;
+  //     this.columns = this.columns.filter((col) => col.id !== columnId);
+  //     this.saveColumns();
+  //     this.renderColumns();
+  //   }
 
-      const newTitle = prompt("Edit column name:", column.title);
-      if (newTitle === null) return;
+  //   private editColumnTitle(columnId: string): void {
+  //     const column = this.columns.find((col) => col.id === columnId);
+  //     if (!column) return;
 
-      const cleanTitle = newTitle.trim();
-      if (!cleanTitle) return;
+  //     const newTitle = prompt("Edit column name:", column.title);
+  //     if (newTitle === null) return;
 
-      column.title = cleanTitle;
-      this.saveColumns();
-      this.renderColumns();
-    }
+  //     const cleanTitle = newTitle.trim();
+  //     if (!cleanTitle) return;
 
-    private bindEvents(): void {
-      const addBtn = document.getElementById("add-column-btn");
-      if (!addBtn) return;
+  //     column.title = cleanTitle;
+  //     this.saveColumns();
+  //     this.renderColumns();
+  //   }
 
-      addBtn.onclick = null;
-      addBtn.addEventListener("click", () => {
-        const title = prompt("New column name:");
-        if (title) {
-          this.addColumns(title);
-        }
-      });
-    }
+  //   private bindEvents(): void {
+  //     const addBtn = document.getElementById("add-column-btn");
+  //     if (!addBtn) return;
 
-    private renderColumns(): void {
-      this.wrapperElement.innerHTML = "";
+  //     addBtn.onclick = null;
+  //     addBtn.addEventListener("click", () => {
+  //       const title = prompt("New column name:");
+  //       if (title) {
+  //         this.addColumns(title);
+  //       }
+  //     });
 
-      this.columns.forEach((column) => {
-        const columnElement = document.createElement("div");
-        columnElement.className = "kanban-column";
-        columnElement.dataset.columnId = column.id;
+  //     this.wrapperElement.addEventListener("click", (event) => {
+  //       const card = (event.target as HTMLElement).closest(".todoItem");
+  //       if (card) {
+  //         const taskId = card.getAttribute("data-task-id");
+  //         this.openTaskModal(taskId);
+  //       }
+  //     });
 
-        columnElement.innerHTML = `
-            <div class="column-header">
-                <h3>${column.title}</h3>
+  //     this.wrapperElement.addEventListener("dragstart", (event) => {
+  //       const card = (event.target as HTMLElement).closest("todoItem");
+  //       if (card) card.classList.add("dragging");
+  //     });
 
-                <div class="column-actions">
-                    <button type="button" class="edit-column-btn"><i class="fa-regular fa-pen-to-square"></i></button>
-                    <button type="button" class="delete-column-btn"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </div>
+  //     this.wrapperElement.addEventListener("dragover", (event) => {
+  //       event.preventDefault();
+  //     });
 
-            <div class="column-body" id="body-${column.id}"></div>
-            `;
-        const editBtn = columnElement.querySelector(
-          ".edit-column-btn",
-        ) as HTMLButtonElement;
-        const deleteBtn = columnElement.querySelector(
-          ".delete-column-btn",
-        ) as HTMLButtonElement;
+  //     this.wrapperElement.addEventListener("drop", (event) => {
+  //       const targetColumn = (event.target as HTMLElement).closest(
+  //         ".column-body",
+  //       );
+  //       const card = document.querySelector(".dragging");
+  //       if (targetColumn && card) {
+  //         targetColumn.appendChild(card);
+  //         card.classList.remove("dragging");
+  //       }
+  //     });
+  //   }
 
-        editBtn?.addEventListener("click", () =>
-          this.editColumnTitle(column.id),
-        );
+  //   private openTaskModal(taskId: string | null): void {
+  //     const modal = document.getElementById("taskModal");
+  //     if (modal) {
+  //       modal.hidden = false;
+  //     }
+  //   }
 
-        deleteBtn?.addEventListener("click", () => {
-          if (confirm(`Delete "${column.title} column?"`)) {
-            this.deleteColumns(column.id);
-          }
-        });
-        this.wrapperElement.appendChild(columnElement);
-      });
-    }
-  }
+  //   private renderColumns(): void {
+  //     this.wrapperElement.innerHTML = "";
 
-  const initKanban = () => {
-    new KanbanBoard("kanban-wrapper");
-  };
+  //     this.columns.forEach((column) => {
+  //       const columnElement = document.createElement("div");
+  //       columnElement.className = "kanban-column";
+  //       columnElement.dataset.columnId = column.id;
 
-  document.addEventListener("DOMContentLoaded", initKanban);
-</script>
+  //       const columnBody = columnElement.querySelector(".column-body");
+  //       if (!columnBody) return;
+
+  //       const task = this.taskList.getByStatus(column.id as TaskStatus);
+
+  //       task.forEach((task: Task) => {
+  //         const card = document.createElement("div");
+  //         card.innerHTML = `
+  //         <div class="todoItem" data-task-id="${task.id}" draggable="true">
+  //           <h3>${task.title}</h3>
+  //           <p>${task.description}</p>
+  //         </div>
+  //         `;
+  //         columnBody.appendChild(card.firstElementChild!);
+  //       });
+
+  //       columnElement.innerHTML = `
+  //           <div class="column-header">
+  //               <h3>${column.title}</h3>
+
+  //               <div class="column-actions">
+  //                   <button type="button" class="edit-column-btn"><i class="fa-regular fa-pen-to-square"></i></button>
+  //                   <button type="button" class="delete-column-btn"><i class="fa-solid fa-trash"></i></button>
+  //               </div>
+  //           </div>
+
+  //           <div class="column-body" id="body-${column.id}"></div>
+  //           `;
+  //       const editBtn = columnElement.querySelector(
+  //         ".edit-column-btn",
+  //       ) as HTMLButtonElement;
+  //       const deleteBtn = columnElement.querySelector(
+  //         ".delete-column-btn",
+  //       ) as HTMLButtonElement;
+
+  //       editBtn?.addEventListener("click", () =>
+  //         this.editColumnTitle(column.id),
+  //       );
+
+  //       deleteBtn?.addEventListener("click", () => {
+  //         if (confirm(`Delete "${column.title} column?"`)) {
+  //           this.deleteColumns(column.id);
+  //         }
+  //       });
+  //       this.wrapperElement.appendChild(columnElement);
+  //     });
+  //   }
+  // }
+</script> -->

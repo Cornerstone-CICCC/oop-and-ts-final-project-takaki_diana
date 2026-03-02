@@ -10,7 +10,7 @@ const { todoItem } = Astro.props;
   <p>{todoItem.description}</p>
 </div>
 
-<style>
+<style is:global>
   .todoItem {
     display: flex;
     flex-direction: column;
