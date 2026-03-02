@@ -3,80 +3,139 @@ import type { Task, TaskStatus } from "../types/task";
 import { seedTasks } from "../data/SeedData";
 
 export class KanbanApp {
-  addTaskBtn: HTMLButtonElement | null;
-  modalRoot: HTMLElement | null;
-  modalCloseBtn: HTMLButtonElement | null;
-  taskForm: HTMLFormElement | null;
-  titleInput: HTMLInputElement | null;
-  taskInput: HTMLInputElement | null;
-  statusInput: HTMLSelectElement | null;
+  addTaskBtn: HTMLButtonElement | null = null;
+  addColumnBtn: HTMLButtonElement | null = null;
+  modalRoot: HTMLElement | null = null;
+  modalCloseBtn: HTMLButtonElement | null = null;
+  taskForm: HTMLFormElement | null = null;
+  titleInput: HTMLInputElement | null = null;
+  taskInput: HTMLInputElement | null = null;
+  statusInput: HTMLSelectElement | null = null;
   taskList: TaskList;
-  tasks: Task[];
-  boadRoot: HTMLElement | null;
-  activeTaskId: string | null;
-  modalEditBtn: HTMLButtonElement | null;
-  modalDeleteBtn: HTMLButtonElement | null;
-  modalMode: "add" | "view" | "edit";
-  dragTaskId: string | null;
-  isDragging: boolean;
+  tasks: Task[] = [];
+  boardRoot: HTMLElement | null = null;
+  activeTaskId: string | null = null;
+  modalEditBtn: HTMLButtonElement | null = null;
+  modalDeleteBtn: HTMLButtonElement | null = null;
+  modalMode: "add" | "view" | "edit" = "view";
+  dragTaskId: string | null = null;
+  isDragging: boolean = false;
+  columns: { id: string; title: string }[] = [];
+  readonly STORAGE_COLS = "kanban-columns";
 
   constructor() {
+    this.taskList = new TaskList();
+    seedTasks.forEach((t) => this.taskList.add(t));
+    this.tasks = this.taskList.getAll();
+    this.columns = this.loadColumns();
+  }
+
+  init() {
+    console.log("🚀 KanbanApp.init() called");
+
+    this.boardRoot = document.querySelector<HTMLElement>("#board-root");
     this.addTaskBtn =
       document.querySelector<HTMLButtonElement>("#add-task-btn");
+    this.addColumnBtn =
+      document.querySelector<HTMLButtonElement>("#add-column-btn");
     this.modalRoot = document.querySelector<HTMLElement>("#modal-root");
     this.modalCloseBtn =
       document.querySelector<HTMLButtonElement>("#modal-close-btn");
-    this.boadRoot = document.querySelector<HTMLElement>("#board-root");
-
     this.taskForm = document.querySelector<HTMLFormElement>("#task-form");
     this.titleInput = document.querySelector<HTMLInputElement>("#title");
     this.taskInput = document.querySelector<HTMLInputElement>("#task");
     this.statusInput =
       document.querySelector<HTMLSelectElement>("#task-status");
-
-    this.activeTaskId = null;
-
     this.modalEditBtn =
       document.querySelector<HTMLButtonElement>("#modal-edit-btn");
-    this.modalEditBtn?.addEventListener("click", () => {
-      this.onEditClick();
-    });
     this.modalDeleteBtn =
       document.querySelector<HTMLButtonElement>("#modal-delete-btn");
-    this.modalDeleteBtn?.addEventListener("click", () => {
-      this.onDeleteClick();
-    });
 
-    this.taskList = new TaskList();
-    seedTasks.forEach((t) => this.taskList.add(t));
-    this.tasks = this.taskList.getAll();
+    console.log("📋 boardRoot:", !!this.boardRoot);
+    console.log("📋 Columns:", this.columns);
 
-    this.modalMode = "view";
+    if (!this.boardRoot) {
+      console.error("❌ #board-root no encontrado!");
+      return;
+    }
 
-    this.dragTaskId = null;
+    this.renderBoard();
+    this.renderTasks();
 
-    this.isDragging = false;
-  }
-  init() {
-    // on load, these need to be fired
-    this.taskList.addFunc((tasks) => {
-      this.tasks = [...tasks];
-      this.renderBoard();
-    });
-    this.bindEvents();
-  }
-
-  bindEvents() {
+    this.initGlobalEvents();
+    this.bindDragAndDrop();
     this.addBtn();
     this.closeBtn();
     this.handleSubmit();
-    this.bindTaskCardClick();
-    this.bindDragAndDrop();
+
+    this.taskList.addFunc(() => {
+      this.renderTasks();
+    });
+
+    if (this.modalEditBtn) {
+      this.modalEditBtn.addEventListener("click", () => this.onEditClick());
+    }
+    if (this.modalDeleteBtn) {
+      this.modalDeleteBtn.addEventListener("click", () => this.onDeleteClick());
+    }
+  }
+
+  initGlobalEvents() {
+    const board = this.boardRoot;
+    if (!board) return;
+
+    board?.addEventListener("click", (event) => {
+      const target = event.target as HTMLElement;
+
+      const card = target.closest(".todoItem") as HTMLElement | null;
+      if (card && !this.isDragging) {
+        const taskId = card.dataset.taskId;
+        if (taskId) {
+          const task = this.taskList.findTaskById(taskId);
+          if (task) this.openViewModal(task);
+          return;
+        }
+      }
+
+      const deleteBtn = target.closest(".delete-col") as HTMLElement | null;
+      if (deleteBtn) {
+        const colId = deleteBtn.getAttribute("data-id");
+        if (colId && confirm("Delete column and all its tasks?")) {
+          this.deleteColumn(colId);
+        }
+        return;
+      }
+
+      const editBtn = target.closest(".edit-col") as HTMLElement | null;
+      if (editBtn) {
+        const colId = editBtn.getAttribute("data-id");
+        if (colId) this.editColumn(colId);
+        return;
+      }
+
+      const addInColBtn = target.closest(
+        ".add-task-in-col",
+      ) as HTMLElement | null;
+      if (addInColBtn) {
+        const colId = addInColBtn.getAttribute("data-col-id");
+        if (colId) {
+          this.openAddModal(colId as TaskStatus);
+        }
+        return;
+      }
+    });
   }
 
   addBtn() {
     this.addTaskBtn?.addEventListener("click", () => {
       this.openAddModal();
+    });
+    this.addColumnBtn?.addEventListener("click", () => {
+      const title = prompt("New column name:");
+      if (!title) return;
+      const clean = title.trim();
+      if (!clean) return;
+      this.addColumn(clean);
     });
   }
 
@@ -86,8 +145,18 @@ export class KanbanApp {
     });
   }
 
-  openAddModal() {
+  openAddModal(defaultStatus?: TaskStatus) {
     this.resetForm();
+
+    if (this.statusInput) {
+      this.statusInput.innerHTML = this.columns
+        .map((col) => `<option value="${col.id}">${col.title}</option>`)
+        .join("");
+      if (defaultStatus) {
+        this.statusInput.value = defaultStatus;
+      }
+    }
+
     this.setModalMode("add");
     this.openModal();
   }
@@ -106,67 +175,59 @@ export class KanbanApp {
   }
 
   bindDragAndDrop() {
-    this.boadRoot?.addEventListener("dragstart", (e) => {
+    const board = this.boardRoot;
+    if (!board) return;
+
+    board.addEventListener("dragstart", (e) => {
       this.isDragging = true;
       const target = e.target as HTMLElement;
-      const card = target.closest<HTMLElement>(".todoItem");
+      const card = target.closest(".todoItem") as HTMLElement | null;
       if (!card) return;
-
-      const taskId = card.dataset.taskId;
-      if (!taskId) return;
-      this.dragTaskId = taskId;
-
-      e.dataTransfer?.setData("text/plain", taskId);
-      e.dataTransfer!.effectAllowed = "move";
+      this.dragTaskId = card.dataset.taskId || null;
     });
 
-    this.boadRoot?.addEventListener("dragend", () => {
+    board.addEventListener("dragend", () => {
       this.isDragging = false;
       this.dragTaskId = null;
+      document
+        .querySelectorAll(".task-list.is-over")
+        .forEach((el) => el.classList.remove("is-over"));
     });
 
-    const zones: Array<{ el: HTMLElement | null; status: TaskStatus }> = [
-      { el: document.querySelector("#column-todo-list"), status: "todo" },
-      {
-        el: document.querySelector("#column-in-progress-list"),
-        status: "in-progress",
-      },
-      { el: document.querySelector("#column-done-list"), status: "done" },
-    ];
+    board.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      const targetList = (e.target as HTMLElement).closest(
+        ".task-list",
+      ) as HTMLElement | null;
+      if (targetList) targetList.classList.add("is-over");
+    });
 
-    // for each column, when elmenet is dropped, change the status of the dropped elment to the corresponding one
+    board.addEventListener("dragleave", (e) => {
+      const targetList = (e.target as HTMLElement).closest(
+        ".task-list",
+      ) as HTMLElement | null;
+      if (targetList) targetList.classList.remove("is-over");
+    });
 
-    for (const z of zones) {
-      z.el?.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        e.dataTransfer!.dropEffect = "move";
-      });
-      z.el?.addEventListener("dragenter", () => {
-        z.el!.classList.add("is-over");
-      });
+    board.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const targetList = (e.target as HTMLElement).closest(
+        ".task-list",
+      ) as HTMLElement | null;
+      if (!targetList) return;
 
-      z.el?.addEventListener("dragleave", () =>
-        z.el!.classList.remove("is-over"),
-      );
-      z.el?.addEventListener("drop", (e) => {
-        z.el?.classList.remove("is-over");
-        const idFromTransfer = e.dataTransfer?.getData("text/plain") || "";
-        const taskId = this.dragTaskId ?? idFromTransfer;
+      targetList.classList.remove("is-over");
 
-        if (!taskId) return;
+      const newStatus = targetList.id.replace("list-", "") as TaskStatus;
+      const taskId = this.dragTaskId;
+
+      if (taskId) {
         const task = this.taskList.findTaskById(taskId);
-        if (!task) return;
-
-        if (task.status === z.status) return;
-
-        this.taskList.update({
-          ...task,
-          status: z.status,
-        });
-
-        this.dragTaskId = null;
-      });
-    }
+        if (task) {
+          this.taskList.update({ ...task, status: newStatus });
+        }
+      }
+    });
   }
 
   handleSubmit() {
@@ -177,27 +238,30 @@ export class KanbanApp {
       const statusValue = this.statusInput?.value as TaskStatus | undefined;
 
       if (!title || !taskDes || !statusValue) {
+        alert("Please complete all fields.");
         return;
       }
 
       if (this.modalMode === "edit") {
         if (!this.activeTaskId) return;
+
         this.taskList.update({
           id: this.activeTaskId,
           title: title,
           description: taskDes,
-          status: statusValue,
+          status: statusValue as any,
         });
 
         this.closeModal();
         this.resetForm();
         return;
       }
+
       const task: Task = {
         id: crypto.randomUUID(),
         title: title,
         description: taskDes,
-        status: statusValue,
+        status: statusValue as any,
       };
 
       this.taskList.add(task);
@@ -206,29 +270,28 @@ export class KanbanApp {
     });
   }
 
-  renderBoard() {
-    const todoList = document.querySelector<HTMLElement>("#column-todo-list");
-    const inProgressList = document.querySelector<HTMLElement>(
-      "#column-in-progress-list",
-    );
-    const doneList = document.querySelector<HTMLElement>("#column-done-list");
+  renderTasks() {
+    const allTasks = this.taskList.getAll();
 
-    if (!todoList || !inProgressList || !doneList) return;
+    document
+      .querySelectorAll(".task-list")
+      .forEach((l) => ((l as HTMLElement).innerHTML = ""));
 
-    todoList.innerHTML = "";
-    inProgressList.innerHTML = "";
-    doneList.innerHTML = "";
+    allTasks.forEach((task) => {
+      const listContainer = document.querySelector(
+        `.task-list[id="list-${task.status}"]`,
+      ) as HTMLElement;
 
-    for (const task of this.tasks) {
-      const card = this.renderTaskCard(task);
-      if (task.status === "todo") {
-        todoList.appendChild(card);
-      } else if (task.status === "in-progress") {
-        inProgressList.appendChild(card);
-      } else if (task.status === "done") {
-        doneList.appendChild(card);
+      if (!listContainer) {
+        console.warn(`No column was found for: ${task.status}`);
+        const todoList = document.querySelector(
+          '.task-list[id="list-todo"]',
+        ) as HTMLElement;
+        todoList?.appendChild(this.renderTaskCard(task));
+      } else {
+        listContainer.appendChild(this.renderTaskCard(task));
       }
-    }
+    });
   }
 
   renderTaskCard(task: Task) {
@@ -259,6 +322,78 @@ export class KanbanApp {
     return document.querySelector(statusMap[status]);
   }
 
+  loadColumns() {
+    const saved = localStorage.getItem(this.STORAGE_COLS);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+
+    return [
+      { id: "todo", title: "To Do" },
+      { id: "in-progress", title: "In Progress" },
+      { id: "done", title: "Done" },
+    ];
+  }
+
+  saveColumns() {
+    localStorage.setItem(this.STORAGE_COLS, JSON.stringify(this.columns));
+  }
+
+  renderBoard() {
+    const boardRoot = this.boardRoot;
+    if (!boardRoot) {
+      console.warn("boardRoot no encontrado");
+      return;
+    }
+    boardRoot.innerHTML = "";
+    console.log("Render columns", this.columns);
+
+    this.columns.forEach((col) => {
+      const colEl = document.createElement("div");
+      colEl.className = "kanban-column";
+      colEl.innerHTML = `
+        <div class="column-header">
+          <h3>${col.title}</h3>
+          <div class="column-actions">
+            <button class="edit-col" data-id="${col.id}"><i class="fa-regular fa-pen-to-square"></i></button>
+            <button class="delete-col" data-id="${col.id}"><i class="fa-regular fa-trash-can"></i></button>
+          </div>
+        </div>
+
+        <button class="add-task-in-col" data-col-id="${col.id}"><i class="fa-solid fa-plus"></i></button>
+
+        <div class="task-list" id="list-${col.id}"></div>`;
+      boardRoot.appendChild(colEl);
+    });
+  }
+
+  addColumn(title: string) {
+    const newCol = { id: `col-${Date.now()}`, title };
+    this.columns.push(newCol);
+    this.saveColumns();
+    this.renderBoard();
+    this.renderTasks();
+  }
+
+  deleteColumn(id: string) {
+    this.columns = this.columns.filter((c) => c.id !== id);
+    this.saveColumns();
+    this.renderBoard();
+    this.renderTasks();
+  }
+
+  editColumn(id: string) {
+    const col = this.columns.find((c) => c.id === id);
+    const newName = prompt("New name:", col?.title);
+    if (newName && col) {
+      col!.title = newName.trim();
+      if (!col.title) return;
+      this.saveColumns();
+      this.renderBoard();
+      this.renderTasks();
+    }
+  }
+
   resetForm() {
     if (!this.titleInput || !this.taskInput || !this.statusInput) return;
     this.titleInput.value = "";
@@ -266,34 +401,9 @@ export class KanbanApp {
     this.statusInput.value = "todo";
   }
 
-  bindTaskCardClick() {
-    this.boadRoot?.addEventListener("click", (e) => {
-      if (this.isDragging) return;
-      console.log("board click bound", this.boadRoot);
-      const target = e.target as HTMLElement;
-      const card = target.closest<HTMLElement>(".todoItem");
-      console.log("card", card);
-      if (!card) return;
-
-      const taskId = card.dataset.taskId;
-      console.log("taskId:", taskId);
-      if (!taskId) return;
-
-      const task = this.taskList.getAll().find((t) => t.id === taskId);
-      console.log("task", task);
-      if (!task) return;
-      this.openViewModal(task);
-    });
-  }
-
   openViewModal(task: Task) {
-    // Depending on the mode, it opens different modal when clicked
     this.activeTaskId = task.id;
-    // const existingTask = this.taskList.findTaskById(this.activeTaskId)
-    // if (existingTask) {
-    //   // pre-fill the form with the existing data
 
-    // }
     this.setModalMode("view");
     const titleEl = document.querySelector<HTMLElement>("#modal-title");
     const descEl = document.querySelector<HTMLElement>("#modal-description");

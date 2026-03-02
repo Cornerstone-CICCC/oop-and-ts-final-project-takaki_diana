@@ -1,34 +1,14 @@
 ---
-// This is the component for each column
-import TaskCard from "./TaskCard.astro";
-import TaskModal from "./TaskModal.astro";
-import { type Task } from "../types/task";
-
 const { title, columnId, tasks } = Astro.props;
-
-// const addBtn = document.getElementById("addBtn");
-// addBtn?.addEventListener("click", () => {
-//   // show modal where user can add task
-//   const taskModal = document.getElementById("taskModal");
-//   taskModal!.style.display = "block";
-// });
 ---
 
 <div class="kanbanColumn" id={columnId}>
   <h2 class="title">{title}</h2>
-  <div class="task-list" id={`${columnId}-list`}>
-    {
-      tasks ? (
-        tasks.map((t: Task) => <TaskCard todoItem={t} />)
-      ) : (
-        <p>No items to show</p>
-      )
-    }
-  </div>
+  <div class="task-list" id={`${columnId}-list`}></div>
 </div>
 
 <!-- ========= Styling ========= -->
-<style>
+<style is:global>
   .kanbanColumn {
     display: flex;
     flex-direction: column;

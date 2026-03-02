@@ -10,7 +10,7 @@ const { todoItem } = Astro.props;
   <p>{todoItem.description}</p>
 </div>
 
-<style>
+<style is:global>
   .todoItem {
     display: flex;
     flex-direction: column;
@@ -23,7 +23,7 @@ const { todoItem } = Astro.props;
 
   .todoItem p {
     margin: 0;
-    color: #94969e;
+    color: black;
   }
 
   .todoItem h3 {

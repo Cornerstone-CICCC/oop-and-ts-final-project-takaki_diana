@@ -1,64 +1,219 @@
+---
+const title = "CICCC Board";
+---
+
 <header class="header">
   <div class="left">
-    <h1>CICCC Board</h1>
-    <input type="search" placeholder="Search" />
+    <h1 class="title">{title}</h1>
+
+    <div class="search-wrap">
+      <label class="search" aria-label="Search tasks">
+        <span class="material-symbols-outlined">search</span>
+        <input id="global-search" type="search" placeholder="Search tasks..." />
+        <button id="search-btn" class="search-btn" type="button">Search</button>
+      </label>
+
+      <small id="search-status" class="status" aria-live="polite">
+        Showing all tasks
+      </small>
+    </div>
   </div>
 
   <div class="right">
-    <span class="material-symbols-outlined">notifications</span>
-    <span class="material-symbols-outlined">help</span>
-    <span class="material-symbols-outlined">account_circle</span>
+    <button class="icon-btn" type="button" aria-label="Notifications">
+      <span class="material-symbols-outlined">notifications</span>
+    </button>
+
+    <button class="icon-btn" type="button" aria-label="Help">
+      <span class="material-symbols-outlined">help</span>
+    </button>
+
+    <button class="avatar-btn" type="button" aria-label="Account">
+      <img class="avatar" src="/avatar.jpg" alt="User avatar" />
+    </button>
   </div>
 </header>
 
+<script is:inline>
+  function applyFilter() {
+    const input = document.querySelector('#global-search');
+    const status = document.querySelector('#search-status');
+    const q = (input?.value || '').toLowerCase().trim();
+
+    const cards = Array.from(document.querySelectorAll('.todoItem'));
+    const total = cards.length;
+
+    let visible = 0;
+    cards.forEach((card) => {
+      const text = (card.textContent || '').toLowerCase();
+      const show = !q || text.includes(q);
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    if (status) {
+      status.textContent = q
+        ? `Showing ${visible} of ${total} tasks for "${q}"`
+        : `Showing all ${total} tasks`;
+    }
+  }
+
+  const input = document.querySelector('#global-search');
+  const btn = document.querySelector('#search-btn');
+
+  input?.addEventListener('input', applyFilter);
+  btn?.addEventListener('click', applyFilter);
+
+  // por si las tareas se renderizan después (tu app re-renderiza)
+  window.addEventListener('load', applyFilter);
+</script>
+
 <style>
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 1.5rem 2rem;
-  background: #f8fafc;
-  gap: 1rem;
-}
-
-.left {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  max-width: 480px;
-  width: 100%;
-}
-
-.left h1 {
-  margin: 0;
-  font-size: 1.8rem;
-}
-
-.left input {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-}
-
-.right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.material-symbols-outlined {
-  font-size: 24px;
-  cursor: pointer;
-}
-
-@media (max-width: 900px) {
   .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    padding: 14px 18px;
+    background: #0f172a;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .left {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    flex: 1;
+    min-width: 280px;
+  }
+
+  .title {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1;
+    white-space: nowrap;
+    padding-top: 8px;
+  }
+
+  .search-wrap {
+    display: flex;
     flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    height: 44px;
+    width: min(720px, 65vw);
+    padding: 0 10px;
+
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .search input {
+    flex: 1;
+    height: 100%;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: white;
+    font-size: 14px;
+  }
+
+  .search input::placeholder {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .search-btn {
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.10);
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .search-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .status {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 12px;
   }
 
   .right {
-    justify-content: flex-end;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
   }
-}
+
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: white;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+
+  .material-symbols-outlined {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .avatar-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+
+  .avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  @media (max-width: 760px) {
+    .header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .left {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .search {
+      width: 100%;
+    }
+    .right {
+      justify-content: flex-end;
+    }
+  }
 </style>
