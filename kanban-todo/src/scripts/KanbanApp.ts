@@ -22,10 +22,16 @@ export class KanbanApp {
   isDragging: boolean = false;
   columns: { id: string; title: string }[] = [];
   readonly STORAGE_COLS = "kanban-columns";
+  readonly STORAGE_TASKS = "kanban-tasks";
 
   constructor() {
     this.taskList = new TaskList();
-    seedTasks.forEach((t) => this.taskList.add(t));
+    const savedTasks = localStorage.getItem(this.STORAGE_TASKS);
+    if (savedTasks) {
+      JSON.parse(savedTasks).forEach((t: Task) => this.taskList.add(t));
+    } else {
+      seedTasks.forEach((t) => this.taskList.add(t));
+    }
     this.tasks = this.taskList.getAll();
     this.columns = this.loadColumns();
   }
@@ -225,6 +231,7 @@ export class KanbanApp {
         const task = this.taskList.findTaskById(taskId);
         if (task) {
           this.taskList.update({ ...task, status: newStatus });
+          this.saveTasks();
         }
       }
     });
@@ -251,6 +258,7 @@ export class KanbanApp {
           description: taskDes,
           status: statusValue as any,
         });
+        this.saveTasks();
 
         this.closeModal();
         this.resetForm();
@@ -265,6 +273,7 @@ export class KanbanApp {
       };
 
       this.taskList.add(task);
+      this.saveTasks();
       this.resetForm();
       this.closeModal();
     });
@@ -309,6 +318,13 @@ export class KanbanApp {
     desP.textContent = des;
     div.append(titleh3, desP);
     return div;
+  }
+
+  saveTasks() {
+    localStorage.setItem(
+      this.STORAGE_TASKS,
+      JSON.stringify(this.taskList.getAll()),
+    );
   }
 
   // get curresponding column
@@ -459,6 +475,7 @@ export class KanbanApp {
     const ok = window.confirm("Do you want to delete this item?");
     if (!ok) return;
     this.taskList.delete(this.activeTaskId);
+    this.saveTasks();
     this.closeModal();
     this.resetForm();
   }
