@@ -36,62 +36,81 @@ const title = "CICCC Board";
 
 <script is:inline>
   function applyFilter() {
-    const input = document.querySelector('#global-search');
-    const status = document.querySelector('#search-status');
-    const q = (input?.value || '').toLowerCase().trim();
-
-    const cards = Array.from(document.querySelectorAll('.todoItem'));
-    const total = cards.length;
-
-    let visible = 0;
-    cards.forEach((card) => {
-      const text = (card.textContent || '').toLowerCase();
-      const show = !q || text.includes(q);
-      card.style.display = show ? '' : 'none';
-      if (show) visible++;
-    });
-
-    if (status) {
-      status.textContent = q
-        ? `Showing ${visible} of ${total} tasks for "${q}"`
-        : `Showing all ${total} tasks`;
-    }
-  }
-
   const input = document.querySelector('#global-search');
-  const btn = document.querySelector('#search-btn');
+  const status = document.querySelector('#search-status');
 
-  input?.addEventListener('input', applyFilter);
-  btn?.addEventListener('click', applyFilter);
+  const query = (input?.value || '').toLowerCase().trim();
 
-  // por si las tareas se renderizan después (tu app re-renderiza)
-  window.addEventListener('load', applyFilter);
+
+  const root = document.querySelector('#board-root') || document;
+  const cards = Array.from(root.querySelectorAll('.todoItem'));
+
+  const total = cards.length;
+  let visible = 0;
+
+  cards.forEach((card) => {
+    const text = (card.textContent || '').toLowerCase();
+    const match = !query || text.includes(query);
+
+    card.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+
+  if (status) {
+    status.textContent = query
+      ? `Showing ${visible} of ${total} tasks for "${query}"`
+      : `Showing all ${total} tasks`;
+  }
+}
+
+// Bind input + button
+const input = document.querySelector('#global-search');
+const btn = document.querySelector('#search-btn');
+
+input?.addEventListener('input', applyFilter);
+btn?.addEventListener('click', applyFilter);
+
+// Enter key
+input?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    applyFilter();
+  }
+});
+
+// when KanbanApp re-renders tasks, it dispatches "kanban:render" event, which triggers applyFilter to re-apply the current search filter to the newly rendered tasks
+window.addEventListener('kanban:render', applyFilter);
+
+// Run once on load
+window.addEventListener('DOMContentLoaded', applyFilter);
 </script>
 
 <style>
-  .header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
 
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+  display: flex;
+  flex-wrap: wrap;             
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 
-    padding: 14px 18px;
-    background: #0f172a;
-    color: #fff;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
+  padding: 14px 18px;
+  background: #0f172a;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
 
   .left {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    flex: 1;
-    min-width: 280px;
-  }
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+
+  flex: 1 1 520px;              
+  min-width: 260px;
+}
 
   .title {
     margin: 0;
@@ -101,26 +120,28 @@ const title = "CICCC Board";
     padding-top: 8px;
   }
 
-  .search-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1;
-  }
+.search-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;                 
+}
 
   .search {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 
-    height: 44px;
-    width: min(720px, 65vw);
-    padding: 0 10px;
+  height: 44px;
+  width: 100%;                  
+  max-width: 720px;             
+  padding: 0 10px;
 
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.06);
-  }
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+}
 
   .search input {
     flex: 1;
@@ -156,12 +177,13 @@ const title = "CICCC Board";
     font-size: 12px;
   }
 
-  .right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-  }
+ .right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  margin-left: auto;           
+}
 
   .icon-btn {
     width: 40px;
@@ -200,20 +222,31 @@ const title = "CICCC Board";
     display: block;
   }
 
-  @media (max-width: 760px) {
-    .header {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .left {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .search {
-      width: 100%;
-    }
-    .right {
-      justify-content: flex-end;
-    }
+@media (max-width: 920px) {
+  .header {
+    gap: 10px;
   }
+
+  .search {
+    max-width: 100%;
+  }
+
+  .search-btn {
+    display: none; 
+  }
+
+  .right {
+    gap: 6px;
+  }
+
+  .icon-btn,
+  .avatar-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
+}
 </style>
