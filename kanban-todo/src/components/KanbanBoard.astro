@@ -1,0 +1,130 @@
+---
+// This is the component for entire board itself
+// will pass the data and use it. Assume that todo item will be passed
+import KanbanColumn from "./KanbanColumn.astro";
+import { TaskList } from "../models/TaskList";
+import { seedTasks } from "../data/SeedData";
+import TaskModal from "./TaskModal.astro";
+
+const taskList = new TaskList();
+seedTasks.forEach((t) => taskList.add(t));
+
+const todoTask = taskList.getByStatus("todo");
+const inProgress = taskList.getByStatus("in-progress");
+const doneTask = taskList.getByStatus("done");
+console.log(todoTask);
+console.log(inProgress);
+console.log(doneTask);
+---
+
+<section class="board" id="board-root">
+  <div class="btn-wrapper">
+    <button id="add-task-btn">Add Task</button>
+  </div>
+  <div class="column-wrapper">
+    <KanbanColumn title="todo" columnId="column-todo" tasks={todoTask} />
+    <KanbanColumn
+      title="In-progress"
+      columnId="column-in-progress"
+      tasks={inProgress}
+    />
+    <KanbanColumn title="Done" columnId="column-done" tasks={doneTask} />
+  </div>
+  <TaskModal id="taskModal" />
+</section>
+
+<style>
+  :root {
+    /* ===== Surfaces ===== */
+    --bg-app: #10121c; /* deepest background */
+    --surface-board: #171b27; /* board background */
+    --surface-card: #131620; /* task card surface */
+    --surface-modal: #1e2330; /* modal surface */
+    --surface-elevated: #232533; /* subtle elevated tint / overlay */
+
+    /* ===== Borders / Dividers ===== */
+    --border-hairline: #3c404f; /* thin dividers */
+    --border-muted: #555863; /* default border */
+    --border-strong: #70768a; /* strong outline / focus ring base */
+
+    /* ===== Text ===== */
+    --text-primary: #fefefe; /* near-white */
+    --text-secondary: #94969e; /* secondary text */
+    --text-muted: #70768a; /* muted/disabled text */
+
+    /* ===== Primary (Blue) ===== */
+    --primary: #2c59c5;
+    --primary-hover: #264fa9;
+    --primary-deep: #213563;
+
+    /* ===== Danger (Red) ===== */
+    --danger: #c53539;
+    --danger-hover: #a53138;
+    --danger-soft: #d1555b;
+  }
+
+  .board {
+    min-height: 100vh;
+    padding: 24px;
+    background: var(--bg-app, #10121c);
+    color: var(--text-primary, #fefefe);
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Header area for button */
+  .btn-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  /* Add Task button */
+  #add-task-btn {
+    background: var(--primary, #2c59c5);
+    color: var(--text-primary, #fefefe);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  #add-task-btn:hover {
+    background: var(--primary-hover, #264fa9);
+  }
+
+  /* Columns layout */
+  .column-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(260px, 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* Responsive */
+  @media (max-width: 980px) {
+    .column-wrapper {
+      grid-template-columns: repeat(2, minmax(260px, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .board {
+      padding: 16px;
+    }
+    .column-wrapper {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Optional: make the whole board feel "carded" */
+  .column-wrapper > * {
+    /* only affects the direct KanbanColumn root */
+    background: var(--surface-board, #171b27);
+    border: 1px solid var(--border-hairline, #3c404f);
+    border-radius: 14px;
+  }
+</style>

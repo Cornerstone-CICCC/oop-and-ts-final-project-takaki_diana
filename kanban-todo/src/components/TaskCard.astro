@@ -1,0 +1,32 @@
+---
+// This is the component for each tasks
+// will pass the data and use it. Assume that todo item will be passed
+
+const { todoItem } = Astro.props;
+---
+
+<div class="todoItem" data-task-id={todoItem.id} draggable="true">
+  <h3>{todoItem.title}</h3>
+  <p>{todoItem.description}</p>
+</div>
+
+<style>
+  .todoItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background-color: #131620;
+    border-radius: 10px;
+    cursor: pointer;
+    padding: 0.75rem;
+  }
+
+  .todoItem p {
+    margin: 0;
+    color: #94969e;
+  }
+
+  .todoItem h3 {
+    margin: 0;
+  }
+</style>

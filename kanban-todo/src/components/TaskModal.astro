@@ -1,0 +1,240 @@
+---
+import { TaskList } from "../models/TaskList";
+const taskList = new TaskList();
+---
+
+<!-- ====== This page is for modal where User can add a task or view, edit -->
+<div id="modal-root" hidden aria-hidden="true">
+  <div class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <header class="modal-header">
+        <h2 class="modal-heading" id="modal-heading">Task</h2>
+        <button
+          id="modal-close-btn"
+          type="button"
+          class="icon-btn"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </header>
+
+      <!-- ADD / EDIT -->
+      <section id="modal-form-section" hidden>
+        <form id="task-form" class="modal-body">
+          <label class="field">
+            <span class="label">Title</span>
+            <input class="input" type="text" id="title" />
+          </label>
+
+          <label class="field">
+            <span class="label">Description</span>
+            <input class="input" type="text" id="task" name="description" />
+          </label>
+
+          <label class="field">
+            <span class="label">Status</span>
+            <select class="input" id="task-status" name="status">
+              <option value="todo">To Do</option>
+              <option value="in-progress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+          </label>
+
+          <footer class="modal-footer">
+            <button id="submitBtn" class="btn btn-primary" type="submit"
+              >Save</button
+            >
+          </footer>
+        </form>
+      </section>
+
+      <!-- VIEW -->
+      <section id="modal-view-section" hidden class="modal-body">
+        <h3 id="modal-title" class="view-title">Task</h3>
+        <p id="modal-description" class="view-desc"></p>
+        <p id="modal-status" class="view-badge"></p>
+
+        <footer class="modal-footer">
+          <button id="modal-edit-btn" class="btn btn-primary" type="button"
+            >Edit</button
+          >
+          <button id="modal-delete-btn" class="btn btn-danger" type="button"
+            >Delete</button
+          >
+        </footer>
+      </section>
+    </div>
+  </div>
+</div>
+
+<style>
+  #modal-root {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+  }
+
+  /* Full-screen dim background */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+  }
+
+  /* The actual modal card */
+  .modal-card {
+    width: 100%;
+    max-width: 680px;
+    background: #1e2330;
+    color: #fefefe;
+
+    border: 1px solid #3c404f;
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+
+    overflow: hidden;
+  }
+
+  /* Header with title + close */
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 16px 18px;
+    border-bottom: 1px solid #3c404f;
+  }
+
+  .modal-heading {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .icon-btn {
+    border: 1px solid #3c404f;
+    background: transparent;
+    color: #fefefe;
+
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+
+    cursor: pointer;
+  }
+
+  .icon-btn:hover {
+    border-color: #70768a;
+  }
+
+  /* Body */
+  .modal-body {
+    padding: 18px;
+    display: grid;
+    gap: 14px;
+  }
+
+  /* Form fields */
+  .field {
+    display: grid;
+    gap: 6px;
+  }
+
+  .label {
+    font-size: 12px;
+    color: #94969e;
+  }
+
+  .input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+
+    background: #131620;
+    border: 1px solid #555863;
+    color: #fefefe;
+
+    outline: none;
+  }
+
+  .input:focus {
+    border-color: #70768a;
+  }
+
+  /* View mode bits */
+  .view-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .view-desc {
+    margin: 0;
+    color: #94969e;
+    line-height: 1.4;
+  }
+
+  .view-badge {
+    margin: 0;
+    display: inline-flex;
+    width: fit-content;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid #3c404f;
+    background: #232533;
+    color: #fefefe;
+    font-size: 12px;
+  }
+
+  /* Footer buttons */
+  .modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+
+    padding: 16px 18px;
+    border-top: 1px solid #3c404f;
+  }
+
+  .btn {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 10px 14px;
+
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: #2c59c5;
+    color: #fefefe;
+  }
+
+  .btn-primary:hover {
+    background: #264fa9;
+  }
+
+  .btn-danger {
+    background: #c53539;
+    color: #fefefe;
+  }
+
+  .btn-danger:hover {
+    background: #a53138;
+  }
+
+  /* Mobile tweaks */
+  @media (max-width: 480px) {
+    .modal-footer {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+</style>
