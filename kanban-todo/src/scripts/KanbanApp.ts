@@ -158,11 +158,11 @@ export class KanbanApp {
       this.statusInput.innerHTML = this.columns
         .map((col) => `<option value="${col.id}">${col.title}</option>`)
         .join("");
+
       if (defaultStatus) {
         this.statusInput.value = defaultStatus;
       }
     }
-
     this.setModalMode("add");
     this.openModal();
   }
@@ -287,17 +287,18 @@ export class KanbanApp {
       .forEach((l) => ((l as HTMLElement).innerHTML = ""));
 
     allTasks.forEach((task) => {
-      const listContainer = document.querySelector(
+      let listContainer = document.querySelector(
         `.task-list[id="list-${task.status}"]`,
       ) as HTMLElement;
 
       if (!listContainer) {
-        console.warn(`No column was found for: ${task.status}`);
-        const todoList = document.querySelector(
-          '.task-list[id="list-todo"]',
-        ) as HTMLElement;
-        todoList?.appendChild(this.renderTaskCard(task));
-      } else {
+        console.warn(
+          `No column was found for: ${task.status}, moving to 'todo'.`,
+        );
+        listContainer = document.querySelector("#list-todo") as HTMLElement;
+        task.status = "todo";
+      }
+      if (listContainer) {
         listContainer.appendChild(this.renderTaskCard(task));
       }
     });
@@ -327,15 +328,8 @@ export class KanbanApp {
     );
   }
 
-  // get curresponding column
   addToColumn(status: TaskStatus) {
-    // This returns corresponding column
-    const statusMap = {
-      todo: "#column-todo",
-      "in-progress": "#column-in-progress",
-      done: "#column-done",
-    };
-    return document.querySelector(statusMap[status]);
+    return document.querySelector(`#column-${status}`);
   }
 
   loadColumns() {
@@ -367,6 +361,7 @@ export class KanbanApp {
     this.columns.forEach((col) => {
       const colEl = document.createElement("div");
       colEl.className = "kanban-column";
+      colEl.id = `column-${col.id}`;
       colEl.innerHTML = `
         <div class="column-header">
           <h3>${col.title}</h3>
