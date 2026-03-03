@@ -200,41 +200,79 @@ export class KanbanApp {
         .forEach((el) => el.classList.remove("is-over"));
     });
 
+    // board.addEventListener("dragover", (e) => {
+    //   e.preventDefault();
+    //   const targetList = (e.target as HTMLElement).closest(
+    //     ".task-list",
+    //   ) as HTMLElement | null;
+    //   if (targetList) targetList.classList.add("is-over");
+    // });
+
     board.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      const targetList = (e.target as HTMLElement).closest(
-        ".task-list",
-      ) as HTMLElement | null;
-      if (targetList) targetList.classList.add("is-over");
-    });
+    const col = (e.target as HTMLElement).closest(".kanban-column") as HTMLElement | null;
+    if (!col) return;
+
+    e.preventDefault();
+
+    const list = col.querySelector(".task-list") as HTMLElement | null;
+    list?.classList.add("is-over");
+  });
+
+    // board.addEventListener("dragleave", (e) => {
+    //   const targetList = (e.target as HTMLElement).closest(
+    //     ".task-list",
+    //   ) as HTMLElement | null;
+    //   if (targetList) targetList.classList.remove("is-over");
+    // });
 
     board.addEventListener("dragleave", (e) => {
-      const targetList = (e.target as HTMLElement).closest(
-        ".task-list",
-      ) as HTMLElement | null;
-      if (targetList) targetList.classList.remove("is-over");
-    });
+    const col = (e.target as HTMLElement).closest(".kanban-column") as HTMLElement | null;
+    if (!col) return;
+
+    const list = col.querySelector(".task-list") as HTMLElement | null;
+    list?.classList.remove("is-over");
+  });
+
+    // board.addEventListener("drop", (e) => {
+    //   e.preventDefault();
+    //   const targetList = (e.target as HTMLElement).closest(
+    //     ".task-list",
+    //   ) as HTMLElement | null;
+    //   if (!targetList) return;
+
+    //   targetList.classList.remove("is-over");
+
+    //   const newStatus = targetList.id.replace("list-", "") as TaskStatus;
+    //   const taskId = this.dragTaskId;
+
+    //   if (taskId) {
+    //     const task = this.taskList.findTaskById(taskId);
+    //     if (task) {
+    //       this.taskList.update({ ...task, status: newStatus });
+    //       this.saveTasks();
+    //     }
+    //   }
+    // });
 
     board.addEventListener("drop", (e) => {
-      e.preventDefault();
-      const targetList = (e.target as HTMLElement).closest(
-        ".task-list",
-      ) as HTMLElement | null;
-      if (!targetList) return;
+    const col = (e.target as HTMLElement).closest(".kanban-column") as HTMLElement | null;
+    if (!col) return;
 
-      targetList.classList.remove("is-over");
+    e.preventDefault();
 
-      const newStatus = targetList.id.replace("list-", "") as TaskStatus;
-      const taskId = this.dragTaskId;
+    const list = col.querySelector(".task-list") as HTMLElement | null;
+    list?.classList.remove("is-over");
 
-      if (taskId) {
-        const task = this.taskList.findTaskById(taskId);
-        if (task) {
-          this.taskList.update({ ...task, status: newStatus });
-          this.saveTasks();
-        }
-      }
-    });
+    const newStatus = (list?.id ?? "").replace("list-", "") as TaskStatus;
+    const taskId = this.dragTaskId;
+    if (!newStatus || !taskId) return;
+
+    const task = this.taskList.findTaskById(taskId);
+    if (task) {
+      this.taskList.update({ ...task, status: newStatus });
+      this.saveTasks();
+    }
+  });
   }
 
   handleSubmit() {
