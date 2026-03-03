@@ -267,6 +267,7 @@ export class KanbanApp {
     const taskId = this.dragTaskId;
     if (!newStatus || !taskId) return;
 
+    this.isDragging = false;
     const task = this.taskList.findTaskById(taskId);
     if (task) {
       this.taskList.update({ ...task, status: newStatus });
@@ -289,6 +290,7 @@ export class KanbanApp {
 
       if (this.modalMode === "edit") {
         if (!this.activeTaskId) return;
+        
 
         this.taskList.update({
           id: this.activeTaskId,
